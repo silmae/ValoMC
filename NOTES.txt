@@ -1,0 +1,27 @@
+
+# Installing 
+
+ValoMC works also with Visual Studio 2019 and Matlab 2020b.
+
+- install VS 2019 
+	- make sure to include C++ workload during the installation
+- install Microsoft MPI (google it for the latest installer or use https://www.microsoft.com/en-us/download/details.aspx?id=57467)
+	- download and install both files: msmpisdk.msi and msmpisetup.exe
+	- in Windows command line, run: ```set MSMPI```, which will setup the environment variables for MPI
+- install Matlab 2020b (version 2018 does not support VS 2019)
+- continue installation of ValoMC with the original instructions:
+	- Obtain the latest source code using git or direct [download](https://github.com/InverseLight/ValoMC/archive/master.zip)
+
+	```
+	git clone https://github.com/InverseLight/ValoMC/
+	```
+ 
+	- Open MATLAB and type
+	```
+	addpath('ValoMC/')
+	```
+
+	where ValoMC/ is the the folder from the zip archive or obtained using git.
+	- in the Matlab command window, run:
+		- mex   -DUSE_OMP cpp/2d/MC2Dmex.cpp COMPFLAGS='\$COMPFLAGS /openmp /O2' CXXFLAGS='\$CXXFLAGS ' LDFLAGS='\$LDFLAGS '
+		- mex   -DUSE_OMP cpp/3d/MC3Dmex.cpp COMPFLAGS='\$COMPFLAGS /openmp /O2' CXXFLAGS='\$CXXFLAGS ' LDFLAGS='\$LDFLAGS '
