@@ -1,0 +1,92 @@
+%% Set up the mesh and the medium
+
+% Create a rectangular mesh
+xsize =  10;    % width of the region [mm]
+ysize =  10;    % width of the region [mm]
+dh = 0.1;       % discretisation size [mm]
+x_half = xsize / 2;
+y_half = ysize / 2;
+vmcmesh = createRectangularMesh(xsize, ysize, dh);
+
+% Set constant background coefficients
+
+vmcmedium = createMedium(vmcmesh);
+vmcmedium.absorption_coefficient = 0.03;     % absorption coefficient [1/mm]
+vmcmedium.scattering_coefficient = 0.3;      % scattering coefficient [1/mm]
+vmcmedium.scattering_anisotropy = 0.9;       % scattering anisotropy parameter [unitless] 
+vmcmedium.refractive_index = 1.3;            % refractive index [unitless]
+
+leaf_width = 1.9;
+leaf_height = 1.9;
+rectangle_position=[0 0];
+leaf_elements= findElements(vmcmesh, 'rectangle', rectangle_position, leaf_width, leaf_height);
+% Set the optical coefficients inside the leaf
+vmcmedium.absorption_coefficient(leaf_elements) = 0.9;
+vmcmedium.scattering_anisotropy(leaf_elements) = 0.1;
+
+%% Set up the boundary and create light sources
+%
+% createBoundary returns a structure which can be used to set the
+% properties of each boundary element individually
+vmcboundary = createBoundary(vmcmesh);
+
+%%
+% Set up 4 lightsources using 4 lines. The lines are shown in the 
+% figure below.
+%
+% <<directingls_lines.png>>
+
+
+line1_start = [0 y_half];
+line1_end = [0 y_half/10];
+% line1_start = [-x_half 0];
+% line1_end = [x y_half/10];
+
+
+% rectangle_diameter = sqrt(rectangle_width^2+rectangle_height^2);
+line_width=xsize;
+
+lightsource4 = findBoundaries(vmcmesh, 'direction', ...
+                              line1_start, ...
+                              line1_end,  ...
+                              line_width);
+                          
+
+
+%% Create and direct lightsources using different directivity patterns
+
+% 1: Direct light source
+%
+% The 'lightsource' -field in vmcboundary sets the directivity pattern of
+% the lightsource. By 'direct' keyword, all photons are launched in the
+% same direction.
+% Create a direction vector for the light using the line that was used to
+% search boundary elements
+lightsource_direction = line1_end - line1_start;
+
+
+% 4: Isotropic light source
+%
+% Photons are launched to all inward directions with an equal probability.
+
+vmcboundary.lightsource(lightsource4) = {'isotropic'};
+
+%% Run the Monte Carlo simulation
+solution = ValoMC(vmcmesh, vmcmedium, vmcboundary);
+
+%% Plot the solution
+hold on;
+
+patch('Faces',vmcmesh.H,'Vertices',vmcmesh.r,'FaceVertexCData', solution.element_fluence, 'FaceColor', 'flat','EdgeColor','none');
+xlabel('[mm]');
+ylabel('[mm]');
+
+% text(-xsize/2+0.4, 0, 'direct lightsource');
+% text(0, -ysize/2+0.4, 'gaussian tilted by 22.5 deg', 'HorizontalAlignment', 'center');
+% text(xsize/2-0.4, 0, 'cosinic', 'HorizontalAlignment', 'right');
+% text(0, ysize/2-0.4, 'isotropic', 'HorizontalAlignment', 'center');
+
+c = colorbar;                   
+c.Label.String = 'Fluence [J/mm^2]';
+hold off
+
